@@ -29,12 +29,50 @@ export function parseSheetData(rawData: string[][]): WeeklyMetrics[] {
     h.includes('subscrib') || h.includes('subs') || h.includes('audience') || h.includes('list')
   );
 
-  return rawData.slice(1).map(row => ({
+  const data = rawData.slice(1).map(row => ({
     week: row[weekIdx] || '',
     openRate: parsePercent(row[openRateIdx]),
     clickRate: parsePercent(row[clickRateIdx]),
     subscribers: parseNumber(row[subscribersIdx]),
   })).filter(d => d.week);
+
+  // Sort by date chronologically
+  return data.sort((a, b) => {
+    const dateA = parseWeekDate(a.week);
+    const dateB = parseWeekDate(b.week);
+    return dateA.getTime() - dateB.getTime();
+  });
+}
+
+export function parseWeekDate(week: string): Date {
+  // Handle various date formats: MM/DD, MM/DD/YY, MM/DD/YYYY
+  const parts = week.split('/');
+  if (parts.length >= 2) {
+    const month = parseInt(parts[0], 10) - 1; // JS months are 0-indexed
+    const day = parseInt(parts[1], 10);
+    let year = new Date().getFullYear();
+
+    if (parts.length >= 3) {
+      year = parseInt(parts[2], 10);
+      // Handle 2-digit years
+      if (year < 100) {
+        year += year < 50 ? 2000 : 1900;
+      }
+    } else {
+      // If no year, infer from context (assume dates span at most ~1 year)
+      // Use current year, but adjust if month suggests previous year
+      const currentMonth = new Date().getMonth();
+      if (month > currentMonth + 2) {
+        year -= 1; // Date is likely from previous year
+      }
+    }
+
+    return new Date(year, month, day);
+  }
+
+  // Fallback: try parsing as-is
+  const parsed = new Date(week);
+  return isNaN(parsed.getTime()) ? new Date(0) : parsed;
 }
 
 function parsePercent(value: string | undefined): number {

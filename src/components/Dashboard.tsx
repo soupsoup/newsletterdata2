@@ -9,7 +9,7 @@ import {
   EngagementChart,
   WeeklyGrowthChart,
 } from './charts';
-import { parseSheetData, calculateSummaryStats, type WeeklyMetrics } from '../utils/dataParser';
+import { parseSheetData, calculateSummaryStats, parseWeekDate, type WeeklyMetrics } from '../utils/dataParser';
 
 type ViewMode = 'charts' | 'table';
 
@@ -57,10 +57,12 @@ export function Dashboard() {
     const allParsed = Object.values(newsletterData).map((d) => d.parsed);
     if (allParsed.length === 0) return { parsed: [], combined: [] };
 
-    // Get all unique weeks across all newsletters
+    // Get all unique weeks across all newsletters, sorted chronologically
     const weekSet = new Set<string>();
     allParsed.forEach((data) => data.forEach((d) => weekSet.add(d.week)));
-    const weeks = Array.from(weekSet).sort();
+    const weeks = Array.from(weekSet).sort((a, b) => {
+      return parseWeekDate(a).getTime() - parseWeekDate(b).getTime();
+    });
 
     // Combine data by week - sum subscribers, average rates
     const combined: WeeklyMetrics[] = weeks.map((week) => {
