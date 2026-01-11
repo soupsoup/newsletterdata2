@@ -13,29 +13,43 @@ import { parseSheetData, calculateSummaryStats } from '../utils/dataParser';
 
 type ViewMode = 'charts' | 'table';
 
+const NEWSLETTERS = ['Scale', 'Exploit', 'Prompt'] as const;
+type Newsletter = typeof NEWSLETTERS[number];
+
 export function Dashboard() {
   const { data, sheets, loading, error, lastUpdated, refresh } = useSheetData(60000);
   const [viewMode, setViewMode] = useState<ViewMode>('charts');
-  const [activeSheet, setActiveSheet] = useState<string | null>(null);
+  const [activeNewsletter, setActiveNewsletter] = useState<Newsletter>('Scale');
 
-  // Parse data and calculate stats
-  const { parsedData, stats } = useMemo(() => {
+  // Parse data and calculate stats for active newsletter
+  const { parsedData, stats, rawData } = useMemo(() => {
     if (!data || sheets.length === 0) {
-      return { parsedData: [], stats: null };
+      return { parsedData: [], stats: null, rawData: null };
     }
 
-    const firstSheet = data[sheets[0]];
-    if (!firstSheet || firstSheet.length < 2) {
-      return { parsedData: [], stats: null };
+    // Find the sheet that matches the active newsletter (case-insensitive)
+    const sheetName = sheets.find(
+      (s) => s.toLowerCase() === activeNewsletter.toLowerCase()
+    );
+
+    if (!sheetName || !data[sheetName] || data[sheetName].length < 2) {
+      return { parsedData: [], stats: null, rawData: null };
     }
 
-    const parsed = parseSheetData(firstSheet);
+    const sheetData = data[sheetName];
+    const parsed = parseSheetData(sheetData);
     const summary = calculateSummaryStats(parsed);
 
-    return { parsedData: parsed, stats: summary };
-  }, [data, sheets]);
+    return { parsedData: parsed, stats: summary, rawData: sheetData };
+  }, [data, sheets, activeNewsletter]);
 
-  const currentSheet = activeSheet || sheets[0];
+  // Check which newsletters have data
+  const availableNewsletters = useMemo(() => {
+    if (!data || sheets.length === 0) return [];
+    return NEWSLETTERS.filter((nl) =>
+      sheets.some((s) => s.toLowerCase() === nl.toLowerCase())
+    );
+  }, [data, sheets]);
 
   if (loading && !data) {
     return (
@@ -78,6 +92,26 @@ export function Dashboard() {
           </div>
         </div>
       </header>
+
+      {/* Newsletter Tabs */}
+      <div className="newsletter-tabs-container">
+        <nav className="newsletter-tabs">
+          {NEWSLETTERS.map((newsletter) => {
+            const isAvailable = availableNewsletters.includes(newsletter);
+            return (
+              <button
+                key={newsletter}
+                className={`newsletter-tab ${activeNewsletter === newsletter ? 'active' : ''} ${!isAvailable ? 'disabled' : ''}`}
+                onClick={() => isAvailable && setActiveNewsletter(newsletter)}
+                disabled={!isAvailable}
+              >
+                <span className="newsletter-tab-name">{newsletter}</span>
+                {!isAvailable && <span className="newsletter-tab-badge">No Data</span>}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
 
       <main className="dashboard-main">
         {/* Stats Overview */}
@@ -129,20 +163,6 @@ export function Dashboard() {
               Table
             </button>
           </div>
-
-          {sheets.length > 1 && viewMode === 'table' && (
-            <nav className="sheet-tabs">
-              {sheets.map((sheet) => (
-                <button
-                  key={sheet}
-                  className={`sheet-tab ${currentSheet === sheet ? 'active' : ''}`}
-                  onClick={() => setActiveSheet(sheet)}
-                >
-                  {sheet}
-                </button>
-              ))}
-            </nav>
-          )}
         </div>
 
         {/* Charts View */}
@@ -163,17 +183,20 @@ export function Dashboard() {
         )}
 
         {/* Table View */}
-        {viewMode === 'table' && data && currentSheet && data[currentSheet] && (
+        {viewMode === 'table' && rawData && (
           <section className="data-section">
-            <DataTable data={data[currentSheet]} title={currentSheet} />
+            <DataTable data={rawData} title={activeNewsletter} />
           </section>
         )}
 
         {/* No Data State */}
         {parsedData.length === 0 && !loading && (
           <div className="no-data-container">
-            <h3>No Data Available</h3>
-            <p>Make sure your spreadsheet has data with columns for Week, Open Rate, Click Rate, and Subscribers.</p>
+            <h3>No Data for {activeNewsletter}</h3>
+            <p>
+              Make sure your spreadsheet has a sheet named "{activeNewsletter}" with columns for
+              Week, Open Rate, Click Rate, and Subscribers.
+            </p>
           </div>
         )}
       </main>

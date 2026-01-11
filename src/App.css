@@ -74,7 +74,65 @@ body {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   color: white;
   padding: 1.5rem 2rem;
+  padding-bottom: 1rem;
+}
+
+/* Newsletter Tabs */
+.newsletter-tabs-container {
+  background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
+  padding: 0 2rem 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.newsletter-tabs {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.newsletter-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px 12px 0 0;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.newsletter-tab:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.newsletter-tab.active {
+  background: #f5f7fa;
+  color: #1a1a2e;
+  border-color: #f5f7fa;
+}
+
+.newsletter-tab.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.newsletter-tab-name {
+  font-weight: 600;
+}
+
+.newsletter-tab-badge {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
 }
 
 .header-content {
@@ -422,11 +480,26 @@ body {
 @media (max-width: 768px) {
   .dashboard-header {
     padding: 1rem;
+    padding-bottom: 0.75rem;
   }
 
   .header-content {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .newsletter-tabs-container {
+    padding: 0 1rem 1rem;
+  }
+
+  .newsletter-tabs {
+    width: 100%;
+  }
+
+  .newsletter-tab {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
   }
 
   .dashboard-main {
