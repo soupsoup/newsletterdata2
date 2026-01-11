@@ -250,7 +250,7 @@ export function Dashboard() {
               title={activeTab === 'Overall' ? 'Total Subscribers (All)' : 'Total Subscribers'}
               value={stats.currentSubscribers.toLocaleString()}
               trend={stats.subscriberGrowthPercent}
-              trendLabel="total growth"
+              trendLabel="vs 4 wks ago"
               color="purple"
             />
             <StatCard

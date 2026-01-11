@@ -108,10 +108,12 @@ export function calculateSummaryStats(data: WeeklyMetrics[]): SummaryStats {
   }
 
   const currentSubscribers = data[data.length - 1].subscribers;
-  const startSubscribers = data[0].subscribers;
-  const subscriberGrowth = currentSubscribers - startSubscribers;
-  const subscriberGrowthPercent = startSubscribers > 0
-    ? ((subscriberGrowth / startSubscribers) * 100)
+  // Compare to 4 weeks ago (or earliest available if less than 4 weeks)
+  const fourWeeksAgoIdx = Math.max(0, data.length - 5);
+  const fourWeeksAgoSubscribers = data[fourWeeksAgoIdx].subscribers;
+  const subscriberGrowth = currentSubscribers - fourWeeksAgoSubscribers;
+  const subscriberGrowthPercent = fourWeeksAgoSubscribers > 0
+    ? ((subscriberGrowth / fourWeeksAgoSubscribers) * 100)
     : 0;
 
   const avgOpenRate = data.reduce((sum, d) => sum + d.openRate, 0) / data.length;
