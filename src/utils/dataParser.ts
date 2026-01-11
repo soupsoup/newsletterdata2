@@ -25,7 +25,9 @@ export function parseSheetData(rawData: string[][]): WeeklyMetrics[] {
   const weekIdx = headers.findIndex(h => h.includes('week'));
   const openRateIdx = headers.findIndex(h => h.includes('open'));
   const clickRateIdx = headers.findIndex(h => h.includes('click'));
-  const subscribersIdx = headers.findIndex(h => h.includes('subscrib'));
+  const subscribersIdx = headers.findIndex(h =>
+    h.includes('subscrib') || h.includes('subs') || h.includes('audience') || h.includes('list')
+  );
 
   return rawData.slice(1).map(row => ({
     week: row[weekIdx] || '',
