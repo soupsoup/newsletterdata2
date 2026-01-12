@@ -5,6 +5,15 @@ export interface WeeklyMetrics {
   subscribers: number;
 }
 
+export interface MonthlyMetrics {
+  month: string;
+  avgOpenRate: number;
+  avgClickRate: number;
+  endSubscribers: number;
+  subscriberGrowth: number;
+  weeksCount: number;
+}
+
 export interface SummaryStats {
   currentSubscribers: number;
   subscriberGrowth: number;
@@ -153,4 +162,46 @@ export function calculateSummaryStats(data: WeeklyMetrics[]): SummaryStats {
     bestOpenRateWeek,
     bestClickRateWeek,
   };
+}
+
+export function aggregateToMonthly(data: WeeklyMetrics[]): MonthlyMetrics[] {
+  if (data.length === 0) return [];
+
+  const monthlyMap = new Map<string, WeeklyMetrics[]>();
+
+  // Group weeks by month
+  for (const week of data) {
+    const date = parseWeekDate(week.week);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthLabel = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+    if (!monthlyMap.has(monthKey)) {
+      monthlyMap.set(monthKey, []);
+    }
+    monthlyMap.get(monthKey)!.push({ ...week, week: monthLabel });
+  }
+
+  // Convert to sorted array and calculate monthly metrics
+  const sortedMonths = Array.from(monthlyMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+  let previousEndSubscribers = 0;
+
+  return sortedMonths.map(([, weeks]) => {
+    const avgOpenRate = weeks.reduce((sum, w) => sum + w.openRate, 0) / weeks.length;
+    const avgClickRate = weeks.reduce((sum, w) => sum + w.clickRate, 0) / weeks.length;
+    const endSubscribers = weeks[weeks.length - 1].subscribers;
+    const startSubscribers = previousEndSubscribers || weeks[0].subscribers;
+    const subscriberGrowth = endSubscribers - startSubscribers;
+
+    previousEndSubscribers = endSubscribers;
+
+    return {
+      month: weeks[0].week, // Use the formatted month label
+      avgOpenRate,
+      avgClickRate,
+      endSubscribers,
+      subscriberGrowth,
+      weeksCount: weeks.length,
+    };
+  });
 }

@@ -8,8 +8,9 @@ import {
   SubscriberChart,
   EngagementChart,
   WeeklyGrowthChart,
+  MonthlyChart,
 } from './charts';
-import { parseSheetData, calculateSummaryStats, parseWeekDate, type WeeklyMetrics } from '../utils/dataParser';
+import { parseSheetData, calculateSummaryStats, parseWeekDate, aggregateToMonthly, type WeeklyMetrics } from '../utils/dataParser';
 
 type ViewMode = 'charts' | 'table';
 
@@ -130,6 +131,11 @@ export function Dashboard() {
       return { name: nl, stats };
     }).filter(Boolean) as { name: Newsletter; stats: ReturnType<typeof calculateSummaryStats> }[];
   }, [newsletterData]);
+
+  // Calculate monthly aggregated data
+  const monthlyData = useMemo(() => {
+    return aggregateToMonthly(parsedData);
+  }, [parsedData]);
 
   if (loading && !data) {
     return (
@@ -308,6 +314,8 @@ export function Dashboard() {
               <SubscriberChart data={parsedData} />
               <WeeklyGrowthChart data={parsedData} />
             </div>
+
+            {monthlyData.length > 0 && <MonthlyChart data={monthlyData} />}
           </section>
         )}
 
