@@ -32,17 +32,28 @@ export function parseSheetData(rawData: string[][]): WeeklyMetrics[] {
 
   const headers = rawData[0].map(h => h.toLowerCase().trim());
   const weekIdx = headers.findIndex(h => h.includes('week'));
-  const openRateIdx = headers.findIndex(h => h.includes('open'));
-  const clickRateIdx = headers.findIndex(h => h.includes('click'));
-  const subscribersIdx = headers.findIndex(h =>
-    h.includes('subscrib') || h.includes('subs') || h.includes('audience') || h.includes('list')
-  );
+
+  // Look specifically for "Ext" columns (External), ignore "PS" columns
+  const openRateIdx = headers.findIndex(h => h.includes('ext') && h.includes('open'));
+  const clickRateIdx = headers.findIndex(h => h.includes('ext') && h.includes('click'));
+  const subscribersIdx = headers.findIndex(h => h.includes('ext') && h.includes('subs'));
+
+  // Fallback to any column if Ext-specific not found (for backwards compatibility)
+  const fallbackOpenIdx = openRateIdx === -1
+    ? headers.findIndex(h => h.includes('open') && !h.includes('ps'))
+    : openRateIdx;
+  const fallbackClickIdx = clickRateIdx === -1
+    ? headers.findIndex(h => h.includes('click') && !h.includes('ps'))
+    : clickRateIdx;
+  const fallbackSubsIdx = subscribersIdx === -1
+    ? headers.findIndex(h => (h.includes('subs') || h.includes('subscrib')) && !h.includes('ps'))
+    : subscribersIdx;
 
   const data = rawData.slice(1).map(row => ({
     week: row[weekIdx] || '',
-    openRate: parsePercent(row[openRateIdx]),
-    clickRate: parsePercent(row[clickRateIdx]),
-    subscribers: parseNumber(row[subscribersIdx]),
+    openRate: parsePercent(row[fallbackOpenIdx]),
+    clickRate: parsePercent(row[fallbackClickIdx]),
+    subscribers: parseNumber(row[fallbackSubsIdx]),
   })).filter(d => d.week);
 
   // Sort by date chronologically
